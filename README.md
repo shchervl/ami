@@ -7,7 +7,7 @@ Python homework project covering closures, decorators, and functional programmin
 ### 1. Create Virtual Environment
 
 ```bash
-python3 -m venv .venv
+python3 -m venv venv
 ```
 
 ### 2. Activate Virtual Environment
@@ -15,13 +15,13 @@ python3 -m venv .venv
 **On macOS/Linux:**
 
 ```bash
-source .venv/bin/activate
+source venv/bin/activate
 ```
 
 **On Windows:**
 
 ```bash
-.venv\Scripts\activate
+venv\Scripts\activate
 ```
 
 ### 3. Install Dependencies
