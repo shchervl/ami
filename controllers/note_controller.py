@@ -1,4 +1,4 @@
-from sqlalchemy import func, select, or_
+from sqlalchemy import select, or_
 from sqlalchemy.orm import Session
 from models.note import Note
 from models.tag import Tag, note_tags
@@ -51,8 +51,6 @@ class NoteController:
             select(note_tags.c.note_id)
             .join(Tag, Tag.id == note_tags.c.tag_id)
             .where(Tag.name.in_(tag_names))
-            .group_by(note_tags.c.note_id)
-            .having(func.count(note_tags.c.tag_id) == len(tag_names))
             .subquery()
         )
         notes = (
