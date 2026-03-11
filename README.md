@@ -44,3 +44,8 @@ To add new dependencies:
 pip install package-name
 pip freeze > requirements.txt
 ```
+
+# Start app from local virtual env
+````
+python app.py
+````
