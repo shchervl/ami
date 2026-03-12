@@ -1,7 +1,9 @@
 from datetime import date
+
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
-from models.contact import Contact, Phone, Email
+
+from models.contact import Contact, Email, Phone
 
 
 class ContactController:
@@ -39,9 +41,7 @@ class ContactController:
         today = date.today()
         results = []
         contacts = (
-            self.session.query(Contact)
-            .filter(Contact.birthday.isnot(None))
-            .all()
+            self.session.query(Contact).filter(Contact.birthday.isnot(None)).all()
         )
         for contact in contacts:
             bday = contact.birthday
@@ -84,8 +84,6 @@ class ContactController:
         emails: list[dict] | None = None,
     ) -> dict:
         self._validate(first_name, last_name)
-        if isinstance(birthday, str):
-            birthday = date.fromisoformat(birthday)
         contact = Contact(
             first_name=first_name,
             last_name=last_name,
@@ -116,8 +114,6 @@ class ContactController:
         contact = self.session.query(Contact).filter(Contact.id == contact_id).first()
         if contact is None:
             raise ValueError(f"Contact with id {contact_id} not found")
-        if isinstance(birthday, str):
-            birthday = date.fromisoformat(birthday)
         contact.first_name = first_name
         contact.last_name = last_name
         contact.address = address
@@ -151,8 +147,7 @@ class ContactController:
             "address": contact.address,
             "birthday": contact.birthday.isoformat() if contact.birthday else None,
             "phones": [
-                {"id": p.id, "number": p.number, "type": p.type}
-                for p in contact.phones
+                {"id": p.id, "number": p.number, "type": p.type} for p in contact.phones
             ],
             "emails": [
                 {"id": e.id, "address": e.address, "type": e.type}

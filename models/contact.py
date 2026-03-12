@@ -1,5 +1,8 @@
+import re
+from datetime import date
+
 from sqlalchemy import Date, ForeignKey, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from models.base import Base
 
@@ -20,6 +23,19 @@ class Contact(Base):
         "Email", back_populates="contact", cascade="all, delete-orphan"
     )
 
+    @validates("birthday")
+    def validate_birthday(self, key, value):
+        if value is None:
+            return value
+        if isinstance(value, date):
+            return value
+        if isinstance(value, str):
+            try:
+                return date.fromisoformat(value)  # YYYY-MM-DD format
+            except ValueError:
+                raise ValueError("Invalid birthday format. It must be YYYY-MM-DD")
+        raise ValueError("Birthday must be a date object or string")
+
 
 class Phone(Base):
     __tablename__ = "phones"
@@ -31,6 +47,13 @@ class Phone(Base):
 
     contact: Mapped["Contact"] = relationship("Contact", back_populates="phones")
 
+    @validates("number")
+    def validate_number(self, key, value):
+        value = str(value).strip()
+        if not (len(value) == 10 and value.isdigit()):
+            raise ValueError("Invalid phone number. It must be exactly 10 digits.")
+        return value
+
 
 class Email(Base):
     __tablename__ = "emails"
@@ -41,3 +64,13 @@ class Email(Base):
     type: Mapped[str | None] = mapped_column(String, nullable=True)
 
     contact: Mapped["Contact"] = relationship("Contact", back_populates="emails")
+
+    @validates("address")
+    def validate_email(self, key, value):
+        value = str(value).strip()
+        # Basic regex for "something@something.com"
+        if not re.match(r"^[^@\s]+@[^@\s]+$", value):
+            raise ValueError(
+                "Invalid email format. It must be 'something@something.com'"
+            )
+        return value
