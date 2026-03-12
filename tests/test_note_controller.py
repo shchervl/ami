@@ -74,14 +74,14 @@ def test_search_by_body(session):
     assert results[0]["title"] == "Note One"
 
 
-def test_search_by_tags_intersection(session):
+def test_search_by_tags_union(session):
     ctrl = NoteController(session)
     note_ab = ctrl.create("Note AB", "Body", tag_names=["a", "b"])
-    ctrl.create("Note A", "Body", tag_names=["a"])
-    ctrl.create("Note B", "Body", tag_names=["b"])
+    note_a = ctrl.create("Note A", "Body", tag_names=["a"])
+    note_b = ctrl.create("Note B", "Body", tag_names=["b"])
     results = ctrl.search_by_tags(["a", "b"])
-    assert len(results) == 1
-    assert results[0]["id"] == note_ab["id"]
+    result_ids = {r["id"] for r in results}
+    assert result_ids == {note_ab["id"], note_a["id"], note_b["id"]}
 
 
 def test_get_all_tags(session):

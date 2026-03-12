@@ -68,11 +68,12 @@ class NoteListView(ttk.Frame):
         self._del_btn.config(state=tk.DISABLED)
 
     def _rebuild_tag_filters(self):
+        previous = {tag: var.get() for tag, var in self._tag_vars.items()}
         for widget in self._tag_filter_frame.winfo_children():
             widget.destroy()
         self._tag_vars.clear()
         for tag in self.controller.get_all_tags():
-            var = tk.BooleanVar(value=False)
+            var = tk.BooleanVar(value=previous.get(tag, False))
             self._tag_vars[tag] = var
             ttk.Checkbutton(self._tag_filter_frame, text=tag, variable=var).pack(side=tk.LEFT, padx=2)
 
