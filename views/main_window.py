@@ -1,7 +1,9 @@
 import sys
+from pathlib import Path
 import tkinter as tk
 from tkinter import ttk
 
+from views.contacts.birthday_list_view import BirthdayListView
 from views.contacts.contact_list_view import ContactListView
 from views.notes.note_list_view import NoteListView
 
@@ -21,6 +23,11 @@ class MainWindow(tk.Tk):
         self.title("ami – Personal Assistant")
         self.geometry("900x600")
 
+        icon_path = Path(__file__).parent.parent / "assets" / "amigos.png"
+        if icon_path.exists():
+            icon = tk.PhotoImage(file=str(icon_path))
+            self.iconphoto(True, icon)
+
         style = ttk.Style(self)
         try:
             style.theme_use(platform_theme())
@@ -32,6 +39,9 @@ class MainWindow(tk.Tk):
 
         contacts_tab = ContactListView(notebook, contact_ctrl)
         notebook.add(contacts_tab, text="Contacts")
+
+        birthdays_tab = BirthdayListView(notebook, contact_ctrl)
+        notebook.add(birthdays_tab, text="Upcoming Birthdays")
 
         notes_tab = NoteListView(notebook, note_ctrl)
         notebook.add(notes_tab, text="Notes")
