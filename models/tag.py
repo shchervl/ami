@@ -19,6 +19,8 @@ class Tag(Base):
 
     @validates("name")
     def validate_name(self, key, value):
+        if not value or not str(value).strip():
+            raise ValueError("Tag name cannot be empty")
         if len(value) > 10:
             raise ValueError(f"Tag '{value}' exceeds 10 character limit")
         return value

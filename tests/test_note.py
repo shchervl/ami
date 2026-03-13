@@ -118,3 +118,13 @@ def test_duplicate_tag_name_raises(session):
     session.add(Tag(name="duplicate"))
     with pytest.raises(IntegrityError):
         session.commit()
+
+
+def test_tag_name_empty_raises():
+    with pytest.raises(ValueError, match="empty"):
+        Tag(name="")
+
+
+def test_tag_name_whitespace_raises():
+    with pytest.raises(ValueError, match="empty"):
+        Tag(name="   ")
