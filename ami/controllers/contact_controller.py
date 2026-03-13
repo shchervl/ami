@@ -3,24 +3,45 @@ from datetime import date
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from models.contact import Contact, Email, Phone
+from ami.models.contact import Contact, Email, Phone
+
+_CONTACT_DB_SORT = {
+    "last_name": Contact.last_name,
+    "first_name": Contact.first_name,
+    "birthday": Contact.birthday,
+}
+
+_CONTACT_PY_KEYS = {
+    "phone": lambda c: c["phones"][0]["number"] if c["phones"] else "",
+    "email": lambda c: (c["emails"][0]["address"] or "").lower() if c["emails"] else "",
+    "last_name": lambda c: c["last_name"].lower(),
+    "first_name": lambda c: c["first_name"].lower(),
+    "birthday": lambda c: c["birthday"] or "",
+    "days_until": lambda c: c.get("days_until", 0),
+}
 
 
 class ContactController:
     def __init__(self, session: Session):
         self.session = session
 
-    def get_all(self) -> list[dict]:
-        contacts = (
-            self.session.query(Contact)
-            .order_by(Contact.last_name, Contact.first_name)
-            .all()
-        )
-        return [self._to_dict(c) for c in contacts]
+    def get_all(self, sort_by: str = "last_name", sort_asc: bool = True) -> list[dict]:
+        q = self.session.query(Contact)
+        if sort_by in _CONTACT_DB_SORT:
+            col = _CONTACT_DB_SORT[sort_by]
+            q = q.order_by(col.asc() if sort_asc else col.desc())
+        else:
+            q = q.order_by(Contact.last_name)
+        result = [self._to_dict(c) for c in q.all()]
+        if sort_by not in _CONTACT_DB_SORT:
+            key = _CONTACT_PY_KEYS.get(sort_by)
+            if key:
+                result = sorted(result, key=key, reverse=not sort_asc)
+        return result
 
-    def search(self, query: str) -> list[dict]:
+    def search(self, query: str, sort_by: str = "last_name", sort_asc: bool = True) -> list[dict]:
         pattern = f"%{query}%"
-        contacts = (
+        q = (
             self.session.query(Contact)
             .outerjoin(Phone)
             .outerjoin(Email)
@@ -33,11 +54,22 @@ class ContactController:
                 )
             )
             .distinct()
-            .all()
         )
-        return [self._to_dict(c) for c in contacts]
+        if sort_by in _CONTACT_DB_SORT:
+            col = _CONTACT_DB_SORT[sort_by]
+            q = q.order_by(col.asc() if sort_asc else col.desc())
+        else:
+            q = q.order_by(Contact.last_name)
+        result = [self._to_dict(c) for c in q.all()]
+        if sort_by not in _CONTACT_DB_SORT:
+            key = _CONTACT_PY_KEYS.get(sort_by)
+            if key:
+                result = sorted(result, key=key, reverse=not sort_asc)
+        return result
 
-    def get_upcoming_birthdays(self, days: int = 7) -> list[dict]:
+    def get_upcoming_birthdays(
+        self, days: int = 7, sort_by: str = "days_until", sort_asc: bool = True
+    ) -> list[dict]:
         today = date.today()
         results = []
         contacts = (
@@ -45,7 +77,6 @@ class ContactController:
         )
         for contact in contacts:
             bday = contact.birthday
-            # Handle Feb 29 in non-leap years
             try:
                 this_year_bday = bday.replace(year=today.year)
             except ValueError:
@@ -66,6 +97,9 @@ class ContactController:
                 contact_dict["days_until"] = days_until
                 results.append(contact_dict)
 
+        key = _CONTACT_PY_KEYS.get(sort_by)
+        if key:
+            results = sorted(results, key=key, reverse=not sort_asc)
         return results
 
     def get_by_id(self, contact_id: int) -> dict | None:
@@ -83,7 +117,6 @@ class ContactController:
         phones: list[dict] | None = None,
         emails: list[dict] | None = None,
     ) -> dict:
-        self._validate(first_name, last_name)
         contact = Contact(
             first_name=first_name,
             last_name=last_name,
@@ -110,7 +143,6 @@ class ContactController:
         phones: list[dict] | None = None,
         emails: list[dict] | None = None,
     ) -> dict:
-        self._validate(first_name, last_name)
         contact = self.session.query(Contact).filter(Contact.id == contact_id).first()
         if contact is None:
             raise ValueError(f"Contact with id {contact_id} not found")
@@ -154,9 +186,3 @@ class ContactController:
                 for e in contact.emails
             ],
         }
-
-    def _validate(self, first_name: str, last_name: str) -> None:
-        if not first_name or not first_name.strip():
-            raise ValueError("first_name cannot be empty or whitespace")
-        if not last_name or not last_name.strip():
-            raise ValueError("last_name cannot be empty or whitespace")

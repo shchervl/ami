@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from models import Note, Tag
+from ami.models import Note, Tag
 
 
 def test_create_note_with_all_fields(session):
@@ -118,3 +118,13 @@ def test_duplicate_tag_name_raises(session):
     session.add(Tag(name="duplicate"))
     with pytest.raises(IntegrityError):
         session.commit()
+
+
+def test_tag_name_empty_raises():
+    with pytest.raises(ValueError, match="empty"):
+        Tag(name="")
+
+
+def test_tag_name_whitespace_raises():
+    with pytest.raises(ValueError, match="empty"):
+        Tag(name="   ")

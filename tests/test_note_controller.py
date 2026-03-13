@@ -1,7 +1,7 @@
 import pytest
 
-from controllers.note_controller import NoteController
-from models.tag import Tag
+from ami.controllers.note_controller import NoteController
+from ami.models.tag import Tag
 
 
 def test_create_note(session):
@@ -107,3 +107,44 @@ def test_validate_empty_title(session):
     ctrl = NoteController(session)
     with pytest.raises(ValueError):
         ctrl.create("", "Some body")
+
+
+def test_get_all_sort_by_title_asc(session):
+    ctrl = NoteController(session)
+    ctrl.create("Zebra Note", "body")
+    ctrl.create("Apple Note", "body")
+    results = ctrl.get_all(sort_by="title", sort_asc=True)
+    assert results[0]["title"] == "Apple Note"
+    assert results[1]["title"] == "Zebra Note"
+
+
+def test_get_all_sort_by_title_desc(session):
+    ctrl = NoteController(session)
+    ctrl.create("Zebra Note", "body")
+    ctrl.create("Apple Note", "body")
+    results = ctrl.get_all(sort_by="title", sort_asc=False)
+    assert results[0]["title"] == "Zebra Note"
+
+
+def test_get_all_sort_by_tags(session):
+    ctrl = NoteController(session)
+    ctrl.create("Note Z", "body", tag_names=["zebra"])
+    ctrl.create("Note A", "body", tag_names=["apple"])
+    results = ctrl.get_all(sort_by="tags", sort_asc=True)
+    assert results[0]["title"] == "Note A"
+
+
+def test_search_sort_by_title(session):
+    ctrl = NoteController(session)
+    ctrl.create("Zorro body search", "body")
+    ctrl.create("Alpha body search", "body")
+    results = ctrl.search("body search", sort_by="title", sort_asc=True)
+    assert results[0]["title"] == "Alpha body search"
+
+
+def test_search_by_tags_sort_by_title(session):
+    ctrl = NoteController(session)
+    ctrl.create("Zeta", "body", tag_names=["work"])
+    ctrl.create("Alpha", "body", tag_names=["work"])
+    results = ctrl.search_by_tags(["work"], sort_by="title", sort_asc=True)
+    assert results[0]["title"] == "Alpha"

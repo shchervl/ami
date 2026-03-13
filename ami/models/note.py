@@ -1,9 +1,9 @@
 from datetime import datetime
 
 from sqlalchemy import DateTime, Integer, String, Text, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
-from models.base import Base
+from .base import Base
 
 
 class Note(Base):
@@ -18,6 +18,12 @@ class Note(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
     )
+
+    @validates("title", "body")
+    def validate_not_empty(self, key, value):
+        if not value or not str(value).strip():
+            raise ValueError(f"{key.title()} cannot be empty")
+        return value
 
     tags: Mapped[list["Tag"]] = relationship(  # noqa: F821
         "Tag", secondary="note_tags", back_populates="notes"

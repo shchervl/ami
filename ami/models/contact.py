@@ -4,7 +4,7 @@ from datetime import date
 from sqlalchemy import Date, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
-from models.base import Base
+from .base import Base
 
 
 class Contact(Base):
@@ -22,6 +22,12 @@ class Contact(Base):
     emails: Mapped[list["Email"]] = relationship(
         "Email", back_populates="contact", cascade="all, delete-orphan"
     )
+
+    @validates("first_name", "last_name")
+    def validate_name(self, key, value):
+        if not value or not str(value).strip():
+            raise ValueError(f"{key.replace('_', ' ').title()} cannot be empty")
+        return value
 
     @validates("birthday")
     def validate_birthday(self, key, value):
