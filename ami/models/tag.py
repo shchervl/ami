@@ -1,7 +1,7 @@
 from sqlalchemy import Column, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
-from .base import Base
+from models.base import Base
 
 note_tags = Table(
     "note_tags",
@@ -19,8 +19,6 @@ class Tag(Base):
 
     @validates("name")
     def validate_name(self, key, value):
-        if not value or not str(value).strip():
-            raise ValueError("Tag name cannot be empty")
         if len(value) > 10:
             raise ValueError(f"Tag '{value}' exceeds 10 character limit")
         return value
