@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from views.base_list_view import BaseListView
+from ami.views.base_list_view import BaseListView
 
 
 class BirthdayListView(BaseListView):

@@ -3,7 +3,7 @@ from datetime import date
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from models.contact import Contact, Email, Phone
+from ami.models.contact import Contact, Email, Phone
 
 _CONTACT_DB_SORT = {
     "last_name": Contact.last_name,
