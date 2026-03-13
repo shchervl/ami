@@ -13,14 +13,14 @@ class NoteListView(ttk.Frame):
         self.refresh()
 
     def _build_ui(self):
-        # Top bar
-        top = ttk.Frame(self)
-        top.pack(fill=tk.X, padx=5, pady=5)
+        # Search group
+        search_outer = ttk.LabelFrame(self, text="Search")
+        search_outer.pack(fill=tk.X, padx=5, pady=5)
 
         self._search_var = tk.StringVar()
-        ttk.Entry(top, textvariable=self._search_var, width=30).pack(side=tk.LEFT, padx=(0, 4))
-        ttk.Button(top, text="Search", command=self._on_search).pack(side=tk.LEFT, padx=(0, 4))
-        ttk.Button(top, text="New Note", command=self._on_new).pack(side=tk.LEFT)
+        ttk.Button(search_outer, text="Search", command=self._on_search).pack(side=tk.RIGHT, padx=5, pady=2)
+        ttk.Entry(search_outer, textvariable=self._search_var).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5,
+                                                                    pady=2)
 
         # Tag filter area
         tag_outer = ttk.LabelFrame(self, text="Filter by Tags")
@@ -28,11 +28,23 @@ class NoteListView(ttk.Frame):
 
         self._tag_filter_frame = ttk.Frame(tag_outer)
         self._tag_filter_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        ttk.Button(tag_outer, text="Apply Filter", command=self._on_filter_tags).pack(side=tk.RIGHT, padx=5, pady=2)
+
+        # Main area
+        main = ttk.Frame(self)
+        main.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
+
+        # Side panel
+        side = ttk.Frame(main)
+        side.pack(side=tk.RIGHT, fill=tk.Y, padx=(4, 0))
+        ttk.Button(side, text="New Note", command=self._on_new).pack(fill=tk.X, pady=(0, 4))
+        self._edit_btn = ttk.Button(side, text="Edit", state=tk.DISABLED, command=self._on_edit)
+        self._edit_btn.pack(fill=tk.X, pady=(0, 4))
+        self._del_btn = ttk.Button(side, text="Delete", state=tk.DISABLED, command=self._on_delete)
+        self._del_btn.pack(fill=tk.X)
 
         # Treeview
         cols = ("title", "tags", "updated")
-        self._tree = ttk.Treeview(self, columns=cols, show="headings", selectmode="browse")
+        self._tree = ttk.Treeview(main, columns=cols, show="headings", selectmode="browse")
         self._tree.heading("title", text="Title")
         self._tree.heading("tags", text="Tags")
         self._tree.heading("updated", text="Updated")
@@ -40,20 +52,12 @@ class NoteListView(ttk.Frame):
         self._tree.column("tags", width=200)
         self._tree.column("updated", width=180)
 
-        vsb = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self._tree.yview)
+        vsb = ttk.Scrollbar(main, orient=tk.VERTICAL, command=self._tree.yview)
         self._tree.configure(yscrollcommand=vsb.set)
-        self._tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0), pady=(0, 5))
-        vsb.pack(side=tk.LEFT, fill=tk.Y, pady=(0, 5))
+        vsb.pack(side=tk.RIGHT, fill=tk.Y)
+        self._tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         self._tree.bind("<<TreeviewSelect>>", self._on_select)
-
-        # Bottom bar
-        bottom = ttk.Frame(self)
-        bottom.pack(fill=tk.X, padx=5, pady=(0, 5))
-        self._edit_btn = ttk.Button(bottom, text="Edit", state=tk.DISABLED, command=self._on_edit)
-        self._edit_btn.pack(side=tk.LEFT, padx=(0, 4))
-        self._del_btn = ttk.Button(bottom, text="Delete", state=tk.DISABLED, command=self._on_delete)
-        self._del_btn.pack(side=tk.LEFT)
 
     def refresh(self, notes=None):
         for row in self._tree.get_children():
@@ -77,7 +81,8 @@ class NoteListView(ttk.Frame):
         for tag in self.controller.get_all_tags():
             var = tk.BooleanVar(value=previous.get(tag, False))
             self._tag_vars[tag] = var
-            ttk.Checkbutton(self._tag_filter_frame, text=tag, variable=var).pack(side=tk.LEFT, padx=2)
+            ttk.Checkbutton(self._tag_filter_frame, text=tag, variable=var, command=self._on_filter_tags).pack(
+                side=tk.LEFT, padx=2)
 
     def _selected_id(self):
         sel = self._tree.selection()
