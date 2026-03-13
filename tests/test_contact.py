@@ -35,8 +35,8 @@ def test_create_contact_with_minimal_fields(session):
 def test_contact_with_multiple_phones(session):
     contact = Contact(first_name="Jane", last_name="Smith")
     contact.phones = [
-        Phone(number="+380001234567", type="personal"),
-        Phone(number="+380007654321", type="work"),
+        Phone(number="1234567890", type="personal"),
+        Phone(number="0987654321", type="work"),
     ]
     session.add(contact)
     session.commit()
@@ -58,7 +58,7 @@ def test_contact_with_multiple_emails(session):
 
 def test_phone_without_type_is_allowed(session):
     contact = Contact(first_name="Jane", last_name="Smith")
-    contact.phones = [Phone(number="+380001234567")]
+    contact.phones = [Phone(number="1234567890")]
     session.add(contact)
     session.commit()
 
@@ -76,7 +76,7 @@ def test_email_without_type_is_allowed(session):
 
 def test_deleting_contact_cascades_phones_and_emails(session):
     contact = Contact(first_name="Jane", last_name="Smith")
-    contact.phones = [Phone(number="+380001234567")]
+    contact.phones = [Phone(number="1234567890")]
     contact.emails = [Email(address="jane@example.com")]
     session.add(contact)
     session.commit()
@@ -106,13 +106,10 @@ def test_contact_with_very_long_name(session):
     assert contact.first_name == long_name
 
 
-def test_phone_with_single_digit_number(session):
+def test_phone_with_single_digit_number_raises(session):
     contact = Contact(first_name="A", last_name="B")
-    contact.phones = [Phone(number="0")]
-    session.add(contact)
-    session.commit()
-
-    assert contact.phones[0].number == "0"
+    with pytest.raises(ValueError):
+        contact.phones = [Phone(number="0")]
 
 
 def test_contact_without_first_name_raises(session):
