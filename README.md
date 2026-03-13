@@ -50,6 +50,42 @@ pip freeze > requirements.txt
 python app.py
 ````
 
+## Contributing (Git Workflow)
+
+### 1. Make sure you have the latest `main`
+
+```bash
+git checkout main
+git pull origin main
+```
+
+### 2. Create a new branch
+
+Name it after what you're working on:
+
+```bash
+git checkout -b feat/your-feature-name
+```
+
+### 3. Make your changes, then stage and commit
+
+```bash
+git add path/to/changed/file.py
+git commit -m "Short description of what you did"
+```
+
+### 4. Push your branch to GitHub
+
+```bash
+git push origin feat/your-feature-name
+```
+
+### 5. Open a Pull Request
+
+Go to the repo on GitHub — you'll see a prompt to open a PR for your recently pushed branch. Click it, fill in a title and description, and submit.
+
+---
+
 ## Architecture
 
 The app follows an **MVC** pattern with a dedicated database layer.
