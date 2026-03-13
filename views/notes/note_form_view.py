@@ -70,7 +70,14 @@ class NoteFormView(tk.Toplevel):
 
     def _add_tag(self):
         tag = self._tag_combo.get().strip()
-        if tag and tag not in self._current_tags:
+        if not tag:
+            return
+        try:
+            self.controller.validate_tag(tag)
+        except ValueError as e:
+            messagebox.showerror("Validation Error", str(e), parent=self)
+            return
+        if tag not in self._current_tags:
             self._current_tags.append(tag)
             self._refresh_badges()
         self._tag_combo.set("")

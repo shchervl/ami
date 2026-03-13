@@ -1,5 +1,6 @@
 from sqlalchemy import select, or_
 from sqlalchemy.orm import Session
+
 from models.note import Note
 from models.tag import Tag, note_tags
 
@@ -72,7 +73,7 @@ class NoteController:
         return self._to_dict(note)
 
     def create(self, title: str, body: str, tag_names: list[str] | None = None) -> dict:
-        self._validate(title, body)
+        self._validate(title, body, tag_names)
         note = Note(title=title, body=body)
         if tag_names:
             note.tags = [self._get_or_create_tag(name) for name in tag_names]
@@ -82,7 +83,7 @@ class NoteController:
 
     def update(self, note_id: int, title: str, body: str,
                tag_names: list[str] | None = None) -> dict:
-        self._validate(title, body)
+        self._validate(title, body, tag_names)
         note = self.session.query(Note).filter(Note.id == note_id).first()
         if note is None:
             raise ValueError(f"Note with id {note_id} not found")
@@ -117,8 +118,14 @@ class NoteController:
             "tags": [tag.name for tag in note.tags],
         }
 
-    def _validate(self, title: str, body: str) -> None:
+    def validate_tag(self, tag: str) -> None:
+        if len(tag) > 10:
+            raise ValueError(f"Tag '{tag}' exceeds 10 character limit")
+
+    def _validate(self, title: str, body: str, tag_names: list[str] | None = None) -> None:
         if not title or not title.strip():
             raise ValueError("Title cannot be empty or whitespace")
         if not body or not body.strip():
             raise ValueError("Body cannot be empty or whitespace")
+        for tag in (tag_names or []):
+            self.validate_tag(tag)
