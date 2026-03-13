@@ -46,3 +46,10 @@ class MainWindow(tk.Tk):
 
         notes_tab = NoteListView(notebook, note_ctrl)
         notebook.add(notes_tab, text="Notes")
+
+        def _on_tab_changed(_event):
+            widget = notebook.nametowidget(notebook.select())
+            if hasattr(widget, "refresh"):
+                widget.refresh()
+
+        notebook.bind("<<NotebookTabChanged>>", _on_tab_changed)

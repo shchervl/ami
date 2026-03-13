@@ -78,9 +78,7 @@ class NoteListView(BaseListView):
         for row in self._tree.get_children():
             self._tree.delete(row)
         if notes is None:
-            notes = self.controller.get_all(
-                sort_by=self._sort_col, sort_asc=self._sort_asc
-            )
+            notes = self._fetch_data()
         for n in notes:
             tags_str = ", ".join(sorted(n.get("tags", [])))
             updated = (n.get("updated_at") or "")[:19]  # trim microseconds

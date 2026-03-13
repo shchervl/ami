@@ -57,7 +57,7 @@ class Phone(Base):
     def validate_number(self, key, value):
         value = str(value).strip()
         if not (len(value) == 10 and value.isdigit()):
-            raise ValueError("Invalid phone number. It must be exactly 10 digits.")
+            raise ValueError(f"Invalid phone number '{value}'. It must be exactly 10 digits.")
         return value
 
 
@@ -77,6 +77,6 @@ class Email(Base):
         # Basic regex for "something@something.com"
         if not re.match(r"^[^@\s]+@[^@\s]+$", value):
             raise ValueError(
-                "Invalid email format. It must be 'something@something.com'"
+                f"Invalid email '{value}'. It must be 'something@something.com'"
             )
         return value

@@ -44,7 +44,7 @@ class ContactFormView(tk.Toplevel):
         self._phones_frame.grid(row=len(fields), column=0, columnspan=2, sticky=tk.EW, **pad)
         header = ttk.Frame(self._phones_frame)
         header.pack(fill=tk.X)
-        ttk.Label(header, text="Number", width=20).pack(side=tk.LEFT, padx=(0, 4))
+        ttk.Label(header, text="Phone", width=20).pack(side=tk.LEFT, padx=(0, 4))
         ttk.Label(header, text="Type", width=12).pack(side=tk.LEFT)
         ttk.Button(form, text="+ Add Phone", command=self._add_phone_row).grid(
             row=len(fields)+1, column=0, columnspan=2, **pad)
@@ -52,6 +52,10 @@ class ContactFormView(tk.Toplevel):
         # Emails section
         self._emails_frame = ttk.LabelFrame(form, text="Emails", padding=5)
         self._emails_frame.grid(row=len(fields)+2, column=0, columnspan=2, sticky=tk.EW, **pad)
+        email_header = ttk.Frame(self._emails_frame)
+        email_header.pack(fill=tk.X)
+        ttk.Label(email_header, text="Email", width=25).pack(side=tk.LEFT, padx=(0, 4))
+        ttk.Label(email_header, text="Type", width=12).pack(side=tk.LEFT)
         ttk.Button(form, text="+ Add Email", command=self._add_email_row).grid(
             row=len(fields)+3, column=0, columnspan=2, **pad)
 
@@ -103,7 +107,7 @@ class ContactFormView(tk.Toplevel):
         self._vars["last_name"].set(contact.get("last_name", ""))
         self._vars["address"].set(contact.get("address") or "")
         self._vars["birthday"].set(contact.get("birthday") or "")
-        for p in contact.get("phones", []):
+        for p in contact.get("", []):
             self._add_phone_row(p.get("number", ""), p.get("type") or "")
         for e in contact.get("emails", []):
             self._add_email_row(e.get("address", ""), e.get("type") or "")

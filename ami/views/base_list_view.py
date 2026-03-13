@@ -18,6 +18,16 @@ class BaseListView(ttk.Frame):
       refresh() — fetch data from controller and repopulate self._tree
     """
 
+    def _fetch_data(self):
+        query = self._search_var.get().strip()
+        if query:
+            return self.controller.search(
+                query, sort_by=self._sort_col, sort_asc=self._sort_asc
+            )
+        return self.controller.get_all(
+            sort_by=self._sort_col, sort_asc=self._sort_asc
+        )
+
     def _selected_id(self) -> int | None:
         sel = self._tree.selection()
         return int(sel[0]) if sel else None
