@@ -78,14 +78,12 @@ class ContactListView(BaseListView):
         for row in self._tree.get_children():
             self._tree.delete(row)
         if contacts is None:
-            contacts = self.controller.get_all(
-                sort_by=self._sort_col, sort_asc=self._sort_asc
-            )
+            contacts = self._fetch_data()
 
         max_phones = 1
         for c in contacts:
             phone = "\n".join(self._fmt_phone(p) for p in c["phones"])
-            email = "\n".join(e["address"] for e in c["emails"])
+            email = "\n".join(self._fmt_email(e) for e in c["emails"])
             self._tree.insert(
                 "", tk.END, iid=str(c["id"]),
                 values=(c["last_name"], c["first_name"], phone, email,
@@ -101,6 +99,9 @@ class ContactListView(BaseListView):
 
     def _fmt_phone(self, p):
         return f'{p["number"]} ({p["type"]})' if p["type"] else p["number"]
+
+    def _fmt_email(self, e):
+        return f'{e["address"]} ({e["type"]})' if e["type"] else e["address"]
 
     def _on_search(self):
         query = self._search_var.get().strip()
