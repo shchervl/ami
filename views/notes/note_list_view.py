@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 
+from views.notes.note_form_view import NoteFormView
+
 
 class NoteListView(ttk.Frame):
     def __init__(self, parent, controller):
@@ -100,13 +102,11 @@ class NoteListView(ttk.Frame):
             self.refresh()
 
     def _on_new(self):
-        from views.notes.note_form_view import NoteFormView
         NoteFormView(self, self.controller, note_id=None, on_save=self.refresh)
 
     def _on_edit(self):
         nid = self._selected_id()
         if nid is not None:
-            from views.notes.note_form_view import NoteFormView
             NoteFormView(self, self.controller, note_id=nid, on_save=self.refresh)
 
     def _on_delete(self):

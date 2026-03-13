@@ -1,11 +1,14 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 
+from views.contacts.contact_form_view import ContactFormView
+
 
 class ContactListView(ttk.Frame):
-    def __init__(self, parent, controller):
+    def __init__(self, parent, controller, on_contact_saved=None):
         super().__init__(parent)
         self.controller = controller
+        self._on_contact_saved = on_contact_saved
         self._build_ui()
         self.refresh()
 
@@ -16,33 +19,36 @@ class ContactListView(ttk.Frame):
 
         self._search_var = tk.StringVar()
         ttk.Entry(top, textvariable=self._search_var, width=30).pack(side=tk.LEFT, padx=(0, 4))
-        ttk.Button(top, text="Search", command=self._on_search).pack(side=tk.LEFT, padx=(0, 4))
-        ttk.Button(top, text="Upcoming Birthdays", command=self._on_birthdays).pack(side=tk.LEFT, padx=(0, 4))
-        ttk.Button(top, text="New Contact", command=self._on_new).pack(side=tk.LEFT)
+        ttk.Button(top, text="Search", command=self._on_search).pack(side=tk.LEFT)
+
+        # Main area
+        main = ttk.Frame(self)
+        main.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
+
+        # Side panel
+        side = ttk.Frame(main)
+        side.pack(side=tk.RIGHT, fill=tk.Y, padx=(4, 0))
+        ttk.Button(side, text="New Contact", command=self._on_new).pack(fill=tk.X, pady=(0, 4))
+        self._edit_btn = ttk.Button(side, text="Edit", state=tk.DISABLED, command=self._on_edit)
+        self._edit_btn.pack(fill=tk.X, pady=(0, 4))
+        self._del_btn = ttk.Button(side, text="Delete", state=tk.DISABLED, command=self._on_delete)
+        self._del_btn.pack(fill=tk.X)
 
         # Treeview
         cols = ("last_name", "first_name", "phone", "email", "birthday")
-        self._tree = ttk.Treeview(self, columns=cols, show="headings", selectmode="browse")
+        self._tree = ttk.Treeview(main, columns=cols, show="headings", selectmode="browse")
         headers = {"last_name": "Last Name", "first_name": "First Name",
                    "phone": "Phone", "email": "Email", "birthday": "Birthday"}
         for col in cols:
             self._tree.heading(col, text=headers[col])
             self._tree.column(col, width=140)
 
-        vsb = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self._tree.yview)
+        vsb = ttk.Scrollbar(main, orient=tk.VERTICAL, command=self._tree.yview)
         self._tree.configure(yscrollcommand=vsb.set)
-        self._tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0), pady=(0, 5))
-        vsb.pack(side=tk.LEFT, fill=tk.Y, pady=(0, 5))
+        vsb.pack(side=tk.RIGHT, fill=tk.Y)
+        self._tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         self._tree.bind("<<TreeviewSelect>>", self._on_select)
-
-        # Bottom bar
-        bottom = ttk.Frame(self)
-        bottom.pack(fill=tk.X, padx=5, pady=(0, 5))
-        self._edit_btn = ttk.Button(bottom, text="Edit", state=tk.DISABLED, command=self._on_edit)
-        self._edit_btn.pack(side=tk.LEFT, padx=(0, 4))
-        self._del_btn = ttk.Button(bottom, text="Delete", state=tk.DISABLED, command=self._on_delete)
-        self._del_btn.pack(side=tk.LEFT)
 
     def refresh(self, contacts=None):
         for row in self._tree.get_children():
@@ -72,19 +78,18 @@ class ContactListView(ttk.Frame):
         results = self.controller.search(query) if query else self.controller.get_all()
         self.refresh(results)
 
-    def _on_birthdays(self):
-        results = self.controller.get_upcoming_birthdays()
-        self.refresh(results)
+    def _on_save(self, contacts=None):
+        self.refresh(contacts)
+        if self._on_contact_saved:
+            self._on_contact_saved()
 
     def _on_new(self):
-        from views.contacts.contact_form_view import ContactFormView
-        ContactFormView(self, self.controller, contact_id=None, on_save=self.refresh)
+        ContactFormView(self, self.controller, contact_id=None, on_save=self._on_save)
 
     def _on_edit(self):
         cid = self._selected_id()
         if cid is not None:
-            from views.contacts.contact_form_view import ContactFormView
-            ContactFormView(self, self.controller, contact_id=cid, on_save=self.refresh)
+            ContactFormView(self, self.controller, contact_id=cid, on_save=self._on_save)
 
     def _on_delete(self):
         cid = self._selected_id()
