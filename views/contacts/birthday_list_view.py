@@ -54,7 +54,7 @@ class BirthdayListView(BaseListView):
             days = int(self._days_var.get())
         except (ValueError, AttributeError):
             return
-        if days < 1:
+        if days < 0:
             return
         contacts = self.controller.get_upcoming_birthdays(
             days, sort_by=self._sort_col, sort_asc=self._sort_asc
