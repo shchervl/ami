@@ -1,7 +1,7 @@
 import pytest
 
-from controllers.note_controller import NoteController
-from models.tag import Tag
+from ami.controllers.note_controller import NoteController
+from ami.models.tag import Tag
 
 
 def test_create_note(session):

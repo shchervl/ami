@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from models import Note, Tag
+from ami.models import Note, Tag
 
 
 def test_create_note_with_all_fields(session):

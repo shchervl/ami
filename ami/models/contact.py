@@ -4,7 +4,7 @@ from datetime import date
 from sqlalchemy import Date, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
-from models.base import Base
+from .base import Base
 
 
 class Contact(Base):

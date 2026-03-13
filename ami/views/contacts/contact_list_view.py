@@ -1,8 +1,8 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, font as tk_font
 
-from views.base_list_view import BaseListView
-from views.contacts.contact_form_view import ContactFormView
+from ami.views.base_list_view import BaseListView
+from ami.views.contacts.contact_form_view import ContactFormView
 
 
 class ContactListView(BaseListView):
@@ -93,7 +93,7 @@ class ContactListView(BaseListView):
             )
             max_phones = max(max_phones, len(c["phones"]) or 1)
 
-        line_h = tk.font.nametofont("TkDefaultFont").metrics("linespace")
+        line_h = tk_font.nametofont("TkDefaultFont").metrics("linespace")
         ttk.Style().configure("Contacts.Treeview", rowheight=max_phones * line_h + 4)
 
         self._edit_btn.config(state=tk.DISABLED)

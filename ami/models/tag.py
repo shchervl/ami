@@ -1,7 +1,7 @@
 from sqlalchemy import Column, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
-from models.base import Base
+from .base import Base
 
 note_tags = Table(
     "note_tags",

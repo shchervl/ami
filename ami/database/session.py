@@ -5,7 +5,7 @@ from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from models import Base
+from ami.models import Base
 
 DB_PATH = Path.home() / ".ami" / "ami.sqlite"
 

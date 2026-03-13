@@ -46,9 +46,29 @@ pip freeze > requirements.txt
 ```
 
 # Start app from local virtual env
-````
-python app.py
-````
+
+**Option A — install globally with pipx (recommended):**
+
+```bash
+brew install pipx   # if not already installed
+pipx install .
+ami
+```
+
+`pipx` manages an isolated environment automatically — no need to activate a venv.
+
+**Option B — install into active virtualenv:**
+
+```bash
+pip install -e .
+ami
+```
+
+**Option C — run directly without installing:**
+
+```bash
+python -m ami.app
+```
 
 ## Contributing (Git Workflow)
 
@@ -91,7 +111,8 @@ Go to the repo on GitHub — you'll see a prompt to open a PR for your recently 
 The app follows an **MVC** pattern with a dedicated database layer.
 
 ```
-app.py
+ami/
+├── app.py                (entry point: main())
 ├── database/session.py   (SQLite setup via SQLAlchemy)
 ├── controllers/
 │   ├── ContactController
@@ -109,10 +130,10 @@ app.py
 
 ### Layers
 
-| Layer | Location | Responsibility |
-|-------|----------|----------------|
-| Entry point | `app.py` | Initialises DB, creates controllers, launches `MainWindow` |
-| Database | `database/session.py` | `init_db()` creates `~/.ami/ami.sqlite` and returns a singleton SQLAlchemy `Session` |
-| Models | `models/` | SQLAlchemy ORM models: `Contact` (has many `Phone`/`Email`), `Note`, `Tag` (linked to notes via `note_tags` join table) |
-| Controllers | `controllers/` | Business logic and DB queries; always return plain `dict` objects to keep views decoupled from ORM |
-| Views | `views/` | tkinter widgets; `MainWindow` is a tabbed notebook holding a contacts tab and a notes tab |
+| Layer       | Location                  | Responsibility                                                                                                          |
+|-------------|---------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| Entry point | `ami/app.py`              | Initialises DB, creates controllers, launches `MainWindow`                                                              |
+| Database    | `ami/database/session.py` | `init_db()` creates `~/.ami/ami.sqlite` and returns a singleton SQLAlchemy `Session`                                    |
+| Models      | `ami/models/`             | SQLAlchemy ORM models: `Contact` (has many `Phone`/`Email`), `Note`, `Tag` (linked to notes via `note_tags` join table) |
+| Controllers | `ami/controllers/`        | Business logic and DB queries; always return plain `dict` objects to keep views decoupled from ORM                      |
+| Views       | `ami/views/`              | tkinter widgets; `MainWindow` is a tabbed notebook holding a contacts tab and a notes tab                               |

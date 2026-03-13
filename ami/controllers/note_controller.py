@@ -1,8 +1,8 @@
 from sqlalchemy import select, or_
 from sqlalchemy.orm import Session
 
-from models.note import Note
-from models.tag import Tag, note_tags
+from ami.models.note import Note
+from ami.models.tag import Tag, note_tags
 
 _NOTE_DB_SORT = {
     "title": Note.title,

@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-from views.base_list_view import BaseListView
-from views.notes.note_form_view import NoteFormView
+from ami.views.base_list_view import BaseListView
+from ami.views.notes.note_form_view import NoteFormView
 
 
 class NoteListView(BaseListView):

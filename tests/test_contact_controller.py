@@ -1,7 +1,8 @@
-import pytest
 from datetime import date, timedelta
 
-from controllers.contact_controller import ContactController
+import pytest
+
+from ami.controllers.contact_controller import ContactController
 
 
 def test_create_contact(session):

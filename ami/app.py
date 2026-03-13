@@ -1,7 +1,7 @@
-from database import init_db
-from controllers.contact_controller import ContactController
-from controllers.note_controller import NoteController
-from views.main_window import MainWindow
+from ami.controllers.contact_controller import ContactController
+from ami.controllers.note_controller import NoteController
+from ami.database import init_db
+from ami.views.main_window import MainWindow
 
 
 def main():

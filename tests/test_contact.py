@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from models import Contact, Email, Phone
+from ami.models import Contact, Email, Phone
 
 
 def test_create_contact_with_all_fields(session):

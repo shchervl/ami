@@ -1,11 +1,11 @@
 import sys
-from pathlib import Path
 import tkinter as tk
+from pathlib import Path
 from tkinter import ttk
 
-from views.contacts.birthday_list_view import BirthdayListView
-from views.contacts.contact_list_view import ContactListView
-from views.notes.note_list_view import NoteListView
+from ami.views.contacts.birthday_list_view import BirthdayListView
+from ami.views.contacts.contact_list_view import ContactListView
+from ami.views.notes.note_list_view import NoteListView
 
 
 def platform_theme() -> str:
