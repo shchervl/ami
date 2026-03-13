@@ -137,3 +137,46 @@ def test_upcoming_birthdays_year_wrap(session):
     assert "Past" not in names_in_results
     # "Grace" is still 3 days away
     assert "Grace" in names_in_results
+
+
+def test_get_all_sort_by_last_name_asc(session):
+    ctrl = ContactController(session)
+    ctrl.create("Alice", "Zebra")
+    ctrl.create("Bob", "Apple")
+    results = ctrl.get_all(sort_by="last_name", sort_asc=True)
+    assert results[0]["last_name"] == "Apple"
+    assert results[1]["last_name"] == "Zebra"
+
+
+def test_get_all_sort_by_last_name_desc(session):
+    ctrl = ContactController(session)
+    ctrl.create("Alice", "Zebra")
+    ctrl.create("Bob", "Apple")
+    results = ctrl.get_all(sort_by="last_name", sort_asc=False)
+    assert results[0]["last_name"] == "Zebra"
+
+
+def test_get_all_sort_by_phone(session):
+    ctrl = ContactController(session)
+    ctrl.create("A", "A", phones=[{"number": "9000000000"}])
+    ctrl.create("B", "B", phones=[{"number": "1000000000"}])
+    results = ctrl.get_all(sort_by="phone", sort_asc=True)
+    assert results[0]["phones"][0]["number"] == "1000000000"
+
+
+def test_search_sort_by_first_name(session):
+    ctrl = ContactController(session)
+    ctrl.create("Zara", "Smith")
+    ctrl.create("Anna", "Smith")
+    results = ctrl.search("Smith", sort_by="first_name", sort_asc=True)
+    assert results[0]["first_name"] == "Anna"
+
+
+def test_get_upcoming_birthdays_sort_by_days_until(session):
+    from datetime import date, timedelta
+    ctrl = ContactController(session)
+    today = date.today()
+    ctrl.create("Far", "Out", birthday=date(1990, (today + timedelta(days=5)).month, (today + timedelta(days=5)).day))
+    ctrl.create("Near", "By", birthday=date(1990, (today + timedelta(days=1)).month, (today + timedelta(days=1)).day))
+    results = ctrl.get_upcoming_birthdays(days=7, sort_by="days_until", sort_asc=True)
+    assert results[0]["first_name"] == "Near"
