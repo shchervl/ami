@@ -1,16 +1,19 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 
+from views.base_list_view import BaseListView
 from views.notes.note_form_view import NoteFormView
 
 
-class NoteListView(ttk.Frame):
+class NoteListView(BaseListView):
+    _headers = {"title": "Title", "tags": "Tags", "updated": "Updated"}
+
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
         self._tag_vars = {}  # tag_name -> BooleanVar
-        self._sort_col = None
-        self._sort_asc = True
+        self._sort_col = "updated"
+        self._sort_asc = False
         self._build_ui()
         self.refresh()
 
@@ -20,9 +23,12 @@ class NoteListView(ttk.Frame):
         search_outer.pack(fill=tk.X, padx=5, pady=5)
 
         self._search_var = tk.StringVar()
-        ttk.Button(search_outer, text="Search", command=self._on_search).pack(side=tk.RIGHT, padx=5, pady=2)
-        ttk.Entry(search_outer, textvariable=self._search_var).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5,
-                                                                    pady=2)
+        ttk.Button(search_outer, text="Search", command=self._on_search).pack(
+            side=tk.RIGHT, padx=5, pady=2
+        )
+        ttk.Entry(search_outer, textvariable=self._search_var).pack(
+            side=tk.LEFT, fill=tk.X, expand=True, padx=5, pady=2
+        )
 
         # Tag filter area
         tag_outer = ttk.LabelFrame(self, text="Filter by Tags")
@@ -38,17 +44,25 @@ class NoteListView(ttk.Frame):
         # Side panel
         side = ttk.Frame(main)
         side.pack(side=tk.RIGHT, fill=tk.Y, padx=(4, 0))
-        ttk.Button(side, text="New Note", command=self._on_new).pack(fill=tk.X, pady=(0, 4))
-        self._edit_btn = ttk.Button(side, text="Edit", state=tk.DISABLED, command=self._on_edit)
+        ttk.Button(side, text="New Note", command=self._on_new).pack(
+            fill=tk.X, pady=(0, 4)
+        )
+        self._edit_btn = ttk.Button(
+            side, text="Edit", state=tk.DISABLED, command=self._on_edit
+        )
         self._edit_btn.pack(fill=tk.X, pady=(0, 4))
-        self._del_btn = ttk.Button(side, text="Delete", state=tk.DISABLED, command=self._on_delete)
+        self._del_btn = ttk.Button(
+            side, text="Delete", state=tk.DISABLED, command=self._on_delete
+        )
         self._del_btn.pack(fill=tk.X)
 
         # Treeview
-        cols = ("title", "tags", "updated")
+        cols = tuple(self._headers)
         self._tree = ttk.Treeview(main, columns=cols, show="headings", selectmode="browse")
-        for col, label in (("title", "Title"), ("tags", "Tags"), ("updated", "Updated")):
-            self._tree.heading(col, text=label, command=lambda c=col: self._on_sort(c))
+        for col in cols:
+            self._tree.heading(
+                col, text=self._headers[col], command=lambda c=col: self._on_sort(c)
+            )
         self._tree.column("title", width=250)
         self._tree.column("tags", width=200)
         self._tree.column("updated", width=180)
@@ -64,32 +78,19 @@ class NoteListView(ttk.Frame):
         for row in self._tree.get_children():
             self._tree.delete(row)
         if notes is None:
-            notes = self.controller.get_all()
-        if self._sort_col:
-            key_map = {"title": lambda n: n["title"].lower(),
-                       "tags": lambda n: sorted(t.lower() for t in n.get("tags", [])),
-                       "updated": lambda n: n.get("updated_at") or ""}
-            notes = sorted(notes, key=key_map[self._sort_col], reverse=not self._sort_asc)
+            notes = self.controller.get_all(
+                sort_by=self._sort_col, sort_asc=self._sort_asc
+            )
         for n in notes:
             tags_str = ", ".join(sorted(n.get("tags", [])))
             updated = (n.get("updated_at") or "")[:19]  # trim microseconds
-            self._tree.insert("", tk.END, iid=str(n["id"]),
-                              values=(n["title"], tags_str, updated))
+            self._tree.insert(
+                "", tk.END, iid=str(n["id"]),
+                values=(n["title"], tags_str, updated)
+            )
         self._rebuild_tag_filters()
         self._edit_btn.config(state=tk.DISABLED)
         self._del_btn.config(state=tk.DISABLED)
-
-    def _on_sort(self, col):
-        if self._sort_col == col:
-            self._sort_asc = not self._sort_asc
-        else:
-            self._sort_col = col
-            self._sort_asc = True
-        labels = {"title": "Title", "tags": "Tags", "updated": "Updated"}
-        for c, label in labels.items():
-            indicator = (" ▲" if self._sort_asc else " ▼") if c == col else ""
-            self._tree.heading(c, text=label + indicator)
-        self.refresh()
 
     def _rebuild_tag_filters(self):
         previous = {tag: var.get() for tag, var in self._tag_vars.items()}
@@ -99,27 +100,29 @@ class NoteListView(ttk.Frame):
         for tag in self.controller.get_all_tags():
             var = tk.BooleanVar(value=previous.get(tag, False))
             self._tag_vars[tag] = var
-            ttk.Checkbutton(self._tag_filter_frame, text=tag, variable=var, command=self._on_filter_tags).pack(
-                side=tk.LEFT, padx=2)
-
-    def _selected_id(self):
-        sel = self._tree.selection()
-        return int(sel[0]) if sel else None
-
-    def _on_select(self, _event=None):
-        state = tk.NORMAL if self._tree.selection() else tk.DISABLED
-        self._edit_btn.config(state=state)
-        self._del_btn.config(state=state)
+            ttk.Checkbutton(
+                self._tag_filter_frame, text=tag, variable=var,
+                command=self._on_filter_tags
+            ).pack(side=tk.LEFT, padx=2)
 
     def _on_search(self):
         query = self._search_var.get().strip()
-        results = self.controller.search(query) if query else self.controller.get_all()
+        if query:
+            results = self.controller.search(
+                query, sort_by=self._sort_col, sort_asc=self._sort_asc
+            )
+        else:
+            results = self.controller.get_all(
+                sort_by=self._sort_col, sort_asc=self._sort_asc
+            )
         self.refresh(results)
 
     def _on_filter_tags(self):
         selected = [tag for tag, var in self._tag_vars.items() if var.get()]
         if selected:
-            results = self.controller.search_by_tags(selected)
+            results = self.controller.search_by_tags(
+                selected, sort_by=self._sort_col, sort_asc=self._sort_asc
+            )
             self.refresh(results)
         else:
             self.refresh()

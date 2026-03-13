@@ -39,7 +39,7 @@ class MainWindow(tk.Tk):
 
         birthdays_tab = BirthdayListView(notebook, contact_ctrl)
 
-        contacts_tab = ContactListView(notebook, contact_ctrl, on_contact_saved=birthdays_tab._refresh)
+        contacts_tab = ContactListView(notebook, contact_ctrl, on_contact_saved=birthdays_tab.refresh)
         notebook.add(contacts_tab, text="Contacts")
 
         notebook.add(birthdays_tab, text="Upcoming Birthdays")
