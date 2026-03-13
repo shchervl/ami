@@ -1,55 +1,51 @@
 from sqlalchemy import select, or_
 from sqlalchemy.orm import Session
 
-from ami.models.note import Note
-from ami.models.tag import Tag, note_tags
-
-_NOTE_DB_SORT = {
-    "title": Note.title,
-    "updated": Note.updated_at,
-}
-
-_NOTE_PY_KEYS = {
-    "tags": lambda n: sorted(t.lower() for t in n.get("tags", []))[0]
-    if n.get("tags") else "",
-}
+from models.note import Note
+from models.tag import Tag, note_tags
 
 
 class NoteController:
     def __init__(self, session: Session):
         self.session = session
 
-    def get_all(self, sort_by: str = "updated", sort_asc: bool = False) -> list[dict]:
-        q = self.session.query(Note)
-        if sort_by in _NOTE_DB_SORT:
-            col = _NOTE_DB_SORT[sort_by]
-            q = q.order_by(col.asc() if sort_asc else col.desc())
-        else:
-            q = q.order_by(Note.updated_at.desc())
-        result = [self._to_dict(n) for n in q.all()]
-        if sort_by in _NOTE_PY_KEYS:
-            result = sorted(result, key=_NOTE_PY_KEYS[sort_by], reverse=not sort_asc)
-        return result
+    def get_all(self, sort_by_tag: str | None = None) -> list[dict]:
+        if sort_by_tag is None:
+            notes = self.session.query(Note).order_by(Note.updated_at.desc()).all()
+            return [self._to_dict(note) for note in notes]
 
-    def search(self, query: str, sort_by: str = "updated", sort_asc: bool = False) -> list[dict]:
+        tag_note_ids = (
+            select(note_tags.c.note_id)
+            .join(Tag, Tag.id == note_tags.c.tag_id)
+            .where(Tag.name == sort_by_tag)
+            .subquery()
+        )
+
+        matching = (
+            self.session.query(Note)
+            .filter(Note.id.in_(select(tag_note_ids.c.note_id)))
+            .order_by(Note.updated_at.desc())
+            .all()
+        )
+        rest = (
+            self.session.query(Note)
+            .filter(Note.id.notin_(select(tag_note_ids.c.note_id)))
+            .order_by(Note.updated_at.desc())
+            .all()
+        )
+        return [self._to_dict(note) for note in matching + rest]
+
+    def search(self, query: str) -> list[dict]:
         pattern = f"%{query}%"
-        q = (
+        notes = (
             self.session.query(Note)
             .filter(or_(Note.title.ilike(pattern), Note.body.ilike(pattern)))
+            .order_by(Note.updated_at.desc())
+            .all()
         )
-        if sort_by in _NOTE_DB_SORT:
-            col = _NOTE_DB_SORT[sort_by]
-            q = q.order_by(col.asc() if sort_asc else col.desc())
-        else:
-            q = q.order_by(Note.updated_at.desc())
-        result = [self._to_dict(n) for n in q.all()]
-        if sort_by in _NOTE_PY_KEYS:
-            result = sorted(result, key=_NOTE_PY_KEYS[sort_by], reverse=not sort_asc)
-        return result
+        return [self._to_dict(note) for note in notes]
 
-    def search_by_tags(
-        self, tag_names: list[str], sort_by: str = "updated", sort_asc: bool = False
-    ) -> list[dict]:
+    def search_by_tags(self, tag_names: list[str]) -> list[dict]:
         if not tag_names:
             return []
         subq = (
@@ -58,16 +54,13 @@ class NoteController:
             .where(Tag.name.in_(tag_names))
             .subquery()
         )
-        q = self.session.query(Note).filter(Note.id.in_(select(subq.c.note_id)))
-        if sort_by in _NOTE_DB_SORT:
-            col = _NOTE_DB_SORT[sort_by]
-            q = q.order_by(col.asc() if sort_asc else col.desc())
-        else:
-            q = q.order_by(Note.updated_at.desc())
-        result = [self._to_dict(n) for n in q.all()]
-        if sort_by in _NOTE_PY_KEYS:
-            result = sorted(result, key=_NOTE_PY_KEYS[sort_by], reverse=not sort_asc)
-        return result
+        notes = (
+            self.session.query(Note)
+            .filter(Note.id.in_(select(subq.c.note_id)))
+            .order_by(Note.updated_at.desc())
+            .all()
+        )
+        return [self._to_dict(note) for note in notes]
 
     def get_all_tags(self) -> list[str]:
         tags = self.session.query(Tag).order_by(Tag.name.asc()).all()
@@ -80,6 +73,7 @@ class NoteController:
         return self._to_dict(note)
 
     def create(self, title: str, body: str, tag_names: list[str] | None = None) -> dict:
+        self._validate(title, body, tag_names)
         note = Note(title=title, body=body)
         if tag_names:
             note.tags = [self._get_or_create_tag(name) for name in tag_names]
@@ -89,6 +83,7 @@ class NoteController:
 
     def update(self, note_id: int, title: str, body: str,
                tag_names: list[str] | None = None) -> dict:
+        self._validate(title, body, tag_names)
         note = self.session.query(Note).filter(Note.id == note_id).first()
         if note is None:
             raise ValueError(f"Note with id {note_id} not found")
@@ -124,4 +119,13 @@ class NoteController:
         }
 
     def validate_tag(self, tag: str) -> None:
-        Tag(name=tag)  # triggers @validates on Tag.name
+        if len(tag) > 10:
+            raise ValueError(f"Tag '{tag}' exceeds 10 character limit")
+
+    def _validate(self, title: str, body: str, tag_names: list[str] | None = None) -> None:
+        if not title or not title.strip():
+            raise ValueError("Title cannot be empty or whitespace")
+        if not body or not body.strip():
+            raise ValueError("Body cannot be empty or whitespace")
+        for tag in (tag_names or []):
+            self.validate_tag(tag)

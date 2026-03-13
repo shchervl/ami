@@ -9,6 +9,8 @@ class NoteListView(ttk.Frame):
         super().__init__(parent)
         self.controller = controller
         self._tag_vars = {}  # tag_name -> BooleanVar
+        self._sort_col = None
+        self._sort_asc = True
         self._build_ui()
         self.refresh()
 
@@ -45,9 +47,8 @@ class NoteListView(ttk.Frame):
         # Treeview
         cols = ("title", "tags", "updated")
         self._tree = ttk.Treeview(main, columns=cols, show="headings", selectmode="browse")
-        self._tree.heading("title", text="Title")
-        self._tree.heading("tags", text="Tags")
-        self._tree.heading("updated", text="Updated")
+        for col, label in (("title", "Title"), ("tags", "Tags"), ("updated", "Updated")):
+            self._tree.heading(col, text=label, command=lambda c=col: self._on_sort(c))
         self._tree.column("title", width=250)
         self._tree.column("tags", width=200)
         self._tree.column("updated", width=180)
@@ -64,14 +65,31 @@ class NoteListView(ttk.Frame):
             self._tree.delete(row)
         if notes is None:
             notes = self.controller.get_all()
+        if self._sort_col:
+            key_map = {"title": lambda n: n["title"].lower(),
+                       "tags": lambda n: sorted(t.lower() for t in n.get("tags", [])),
+                       "updated": lambda n: n.get("updated_at") or ""}
+            notes = sorted(notes, key=key_map[self._sort_col], reverse=not self._sort_asc)
         for n in notes:
-            tags_str = ", ".join(n.get("tags", []))
+            tags_str = ", ".join(sorted(n.get("tags", [])))
             updated = (n.get("updated_at") or "")[:19]  # trim microseconds
             self._tree.insert("", tk.END, iid=str(n["id"]),
                               values=(n["title"], tags_str, updated))
         self._rebuild_tag_filters()
         self._edit_btn.config(state=tk.DISABLED)
         self._del_btn.config(state=tk.DISABLED)
+
+    def _on_sort(self, col):
+        if self._sort_col == col:
+            self._sort_asc = not self._sort_asc
+        else:
+            self._sort_col = col
+            self._sort_asc = True
+        labels = {"title": "Title", "tags": "Tags", "updated": "Updated"}
+        for c, label in labels.items():
+            indicator = (" ▲" if self._sort_asc else " ▼") if c == col else ""
+            self._tree.heading(c, text=label + indicator)
+        self.refresh()
 
     def _rebuild_tag_filters(self):
         previous = {tag: var.get() for tag, var in self._tag_vars.items()}
