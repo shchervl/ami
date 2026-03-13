@@ -15,14 +15,14 @@ def test_create_contact(session):
 
 def test_create_with_phones_emails(session):
     ctrl = ContactController(session)
-    phones = [{"number": "111-1111", "type": "mobile"}, {"number": "222-2222", "type": "work"}]
+    phones = [{"number": "1111111111", "type": "mobile"}, {"number": "2222222222", "type": "work"}]
     emails = [{"address": "alice@example.com", "type": "personal"}]
     result = ctrl.create("Alice", "Smith", phones=phones, emails=emails)
     assert len(result["phones"]) == 2
     assert len(result["emails"]) == 1
     phone_numbers = {p["number"] for p in result["phones"]}
-    assert "111-1111" in phone_numbers
-    assert "222-2222" in phone_numbers
+    assert "1111111111" in phone_numbers
+    assert "2222222222" in phone_numbers
     assert result["emails"][0]["address"] == "alice@example.com"
 
 
@@ -44,19 +44,19 @@ def test_get_by_id_not_found(session):
 
 def test_update_contact(session):
     ctrl = ContactController(session)
-    created = ctrl.create("Carol", "White", phones=[{"number": "000-0000"}])
+    created = ctrl.create("Carol", "White", phones=[{"number": "0000000000"}])
     updated = ctrl.update(
         created["id"],
         "Carol",
         "Black",
-        phones=[{"number": "111-1111"}, {"number": "222-2222"}],
+        phones=[{"number": "1111111111"}, {"number": "2222222222"}],
     )
     assert updated["last_name"] == "Black"
     assert len(updated["phones"]) == 2
     phone_numbers = {p["number"] for p in updated["phones"]}
-    assert "000-0000" not in phone_numbers
-    assert "111-1111" in phone_numbers
-    assert "222-2222" in phone_numbers
+    assert "0000000000" not in phone_numbers
+    assert "1111111111" in phone_numbers
+    assert "2222222222" in phone_numbers
 
 
 def test_delete_contact(session):
@@ -77,7 +77,7 @@ def test_search_by_name(session):
 
 def test_search_by_phone(session):
     ctrl = ContactController(session)
-    ctrl.create("Eve", "Taylor", phones=[{"number": "555-1234"}])
+    ctrl.create("Eve", "Taylor", phones=[{"number": "5551234567"}])
     results = ctrl.search("555")
     assert len(results) == 1
     assert results[0]["first_name"] == "Eve"
