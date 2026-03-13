@@ -37,10 +37,11 @@ class MainWindow(tk.Tk):
         notebook = ttk.Notebook(self)
         notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        contacts_tab = ContactListView(notebook, contact_ctrl)
+        birthdays_tab = BirthdayListView(notebook, contact_ctrl)
+
+        contacts_tab = ContactListView(notebook, contact_ctrl, on_contact_saved=birthdays_tab._refresh)
         notebook.add(contacts_tab, text="Contacts")
 
-        birthdays_tab = BirthdayListView(notebook, contact_ctrl)
         notebook.add(birthdays_tab, text="Upcoming Birthdays")
 
         notes_tab = NoteListView(notebook, note_ctrl)

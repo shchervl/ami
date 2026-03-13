@@ -1,11 +1,14 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 
+from views.contacts.contact_form_view import ContactFormView
+
 
 class ContactListView(ttk.Frame):
-    def __init__(self, parent, controller):
+    def __init__(self, parent, controller, on_contact_saved=None):
         super().__init__(parent)
         self.controller = controller
+        self._on_contact_saved = on_contact_saved
         self._build_ui()
         self.refresh()
 
@@ -75,15 +78,18 @@ class ContactListView(ttk.Frame):
         results = self.controller.search(query) if query else self.controller.get_all()
         self.refresh(results)
 
+    def _on_save(self, contacts=None):
+        self.refresh(contacts)
+        if self._on_contact_saved:
+            self._on_contact_saved()
+
     def _on_new(self):
-        from views.contacts.contact_form_view import ContactFormView
-        ContactFormView(self, self.controller, contact_id=None, on_save=self.refresh)
+        ContactFormView(self, self.controller, contact_id=None, on_save=self._on_save)
 
     def _on_edit(self):
         cid = self._selected_id()
         if cid is not None:
-            from views.contacts.contact_form_view import ContactFormView
-            ContactFormView(self, self.controller, contact_id=cid, on_save=self.refresh)
+            ContactFormView(self, self.controller, contact_id=cid, on_save=self._on_save)
 
     def _on_delete(self):
         cid = self._selected_id()

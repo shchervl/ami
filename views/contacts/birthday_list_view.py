@@ -14,7 +14,7 @@ class BirthdayListView(ttk.Frame):
         top.pack(fill=tk.X, padx=5, pady=5)
 
         ttk.Label(top, text="Show birthdays within next").pack(side=tk.LEFT)
-        self._days_var = tk.StringVar(value="7")
+        self._days_var = tk.StringVar(value="365")
         self._days_var.trace_add("write", lambda *_: self._refresh())
         ttk.Entry(top, textvariable=self._days_var, width=5).pack(side=tk.LEFT, padx=4)
         ttk.Label(top, text="days").pack(side=tk.LEFT)
@@ -46,7 +46,7 @@ class BirthdayListView(ttk.Frame):
             return
         if days < 1:
             return
-        contacts = self.controller.get_upcoming_birthdays(days)
+        contacts = sorted(self.controller.get_upcoming_birthdays(days), key=lambda c: c["days_until"])
         for c in contacts:
             self._tree.insert(
                 "", tk.END,
