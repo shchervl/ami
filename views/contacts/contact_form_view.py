@@ -42,6 +42,10 @@ class ContactFormView(tk.Toplevel):
         # Phones section
         self._phones_frame = ttk.LabelFrame(form, text="Phones", padding=5)
         self._phones_frame.grid(row=len(fields), column=0, columnspan=2, sticky=tk.EW, **pad)
+        header = ttk.Frame(self._phones_frame)
+        header.pack(fill=tk.X)
+        ttk.Label(header, text="Number", width=20).pack(side=tk.LEFT, padx=(0, 4))
+        ttk.Label(header, text="Type", width=12).pack(side=tk.LEFT)
         ttk.Button(form, text="+ Add Phone", command=self._add_phone_row).grid(
             row=len(fields)+1, column=0, columnspan=2, **pad)
 
