@@ -23,6 +23,12 @@ class Contact(Base):
         "Email", back_populates="contact", cascade="all, delete-orphan"
     )
 
+    @validates("first_name", "last_name")
+    def validate_name(self, key, value):
+        if not value or not str(value).strip():
+            raise ValueError(f"{key.replace('_', ' ').title()} cannot be empty")
+        return value
+
     @validates("birthday")
     def validate_birthday(self, key, value):
         if value is None:

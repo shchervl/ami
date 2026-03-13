@@ -83,7 +83,6 @@ class ContactController:
         phones: list[dict] | None = None,
         emails: list[dict] | None = None,
     ) -> dict:
-        self._validate(first_name, last_name)
         contact = Contact(
             first_name=first_name,
             last_name=last_name,
@@ -110,7 +109,6 @@ class ContactController:
         phones: list[dict] | None = None,
         emails: list[dict] | None = None,
     ) -> dict:
-        self._validate(first_name, last_name)
         contact = self.session.query(Contact).filter(Contact.id == contact_id).first()
         if contact is None:
             raise ValueError(f"Contact with id {contact_id} not found")
@@ -155,8 +153,3 @@ class ContactController:
             ],
         }
 
-    def _validate(self, first_name: str, last_name: str) -> None:
-        if not first_name or not first_name.strip():
-            raise ValueError("first_name cannot be empty or whitespace")
-        if not last_name or not last_name.strip():
-            raise ValueError("last_name cannot be empty or whitespace")
