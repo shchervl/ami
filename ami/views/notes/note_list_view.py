@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk
 
 from ami.views.base_list_view import BaseListView
 from ami.views.notes.note_form_view import NoteFormView
@@ -12,6 +12,7 @@ _SORT_KEYS = {
 
 
 class NoteListView(BaseListView):
+    _delete_prompt = "Delete this note?"
     _headers = {"title": "Title", "tags": "Tags", "updated": "Updated"}
 
     def __init__(self, parent, controller):
@@ -126,6 +127,11 @@ class NoteListView(BaseListView):
 
     def _fetch_data(self):
         selected_tags = [tag for tag, var in self._tag_vars.items() if var.get()]
+        query = self._search_var.get().strip()
+        if selected_tags and query:
+            return self.controller.search_by_tags_and_text(
+                selected_tags, query, sort_by=self._sort_col, sort_asc=self._sort_asc
+            )
         if selected_tags:
             return self.controller.search_by_tags(
                 selected_tags, sort_by=self._sort_col, sort_asc=self._sort_asc
@@ -151,12 +157,3 @@ class NoteListView(BaseListView):
         if nid is not None:
             NoteFormView(self, self.controller, note_id=nid, on_save=self.refresh)
 
-    def _on_delete(self):
-        nid = self._selected_id()
-        if nid is not None:
-            if messagebox.askyesno("Delete", "Delete this note?"):
-                try:
-                    self.controller.delete(nid)
-                except ValueError as e:
-                    messagebox.showerror("Error", str(e))
-                self.refresh()

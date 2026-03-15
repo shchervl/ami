@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, font as tk_font
+from tkinter import ttk, font as tk_font
 
 from ami.views.base_list_view import BaseListView
 from ami.views.contacts.contact_form_view import ContactFormView
@@ -14,6 +14,7 @@ _SORT_KEYS = {
 
 
 class ContactListView(BaseListView):
+    _delete_prompt = "Delete this contact?"
     _headers = {
         "last_name": "Last Name",
         "first_name": "First Name",
@@ -142,12 +143,3 @@ class ContactListView(BaseListView):
                 self, self.controller, contact_id=cid, on_save=self._on_save
             )
 
-    def _on_delete(self):
-        cid = self._selected_id()
-        if cid is not None:
-            if messagebox.askyesno("Delete", "Delete this contact?"):
-                try:
-                    self.controller.delete(cid)
-                except ValueError as e:
-                    messagebox.showerror("Error", str(e))
-                self.refresh()

@@ -31,8 +31,7 @@ class ContactController:
             selectinload(Contact.emails),
         )
 
-    def get_all(self, sort_by: str = "last_name", sort_asc: bool = True) -> list[dict]:
-        q = self._base_query()
+    def _sorted(self, q, sort_by: str, sort_asc: bool) -> list[dict]:
         if sort_by in _CONTACT_DB_SORT:
             col = _CONTACT_DB_SORT[sort_by]
             q = q.order_by(col.asc() if sort_asc else col.desc())
@@ -44,6 +43,25 @@ class ContactController:
             if key:
                 result = sorted(result, key=key, reverse=not sort_asc)
         return result
+
+    def _get_or_raise(self, contact_id: int) -> Contact:
+        contact = self.session.query(Contact).filter(Contact.id == contact_id).first()
+        if contact is None:
+            raise ValueError(f"Contact with id {contact_id} not found")
+        return contact
+
+    def _assign_phones_emails(self, contact: Contact,
+                              phones: list[dict] | None,
+                              emails: list[dict] | None) -> None:
+        if phones:
+            for p in phones:
+                contact.phones.append(Phone(number=p["number"], type=p.get("type")))
+        if emails:
+            for e in emails:
+                contact.emails.append(Email(address=e["address"], type=e.get("type")))
+
+    def get_all(self, sort_by: str = "last_name", sort_asc: bool = True) -> list[dict]:
+        return self._sorted(self._base_query(), sort_by, sort_asc)
 
     def search(self, query: str, sort_by: str = "last_name", sort_asc: bool = True) -> list[dict]:
         pattern = f"%{query}%"
@@ -61,26 +79,14 @@ class ContactController:
             )
             .distinct()
         )
-        if sort_by in _CONTACT_DB_SORT:
-            col = _CONTACT_DB_SORT[sort_by]
-            q = q.order_by(col.asc() if sort_asc else col.desc())
-        else:
-            q = q.order_by(Contact.last_name)
-        result = [self._to_dict(c) for c in q.all()]
-        if sort_by not in _CONTACT_DB_SORT:
-            key = _CONTACT_PY_KEYS.get(sort_by)
-            if key:
-                result = sorted(result, key=key, reverse=not sort_asc)
-        return result
+        return self._sorted(q, sort_by, sort_asc)
 
     def get_upcoming_birthdays(
         self, days: int = 7, sort_by: str = "days_until", sort_asc: bool = True
     ) -> list[dict]:
         today = date.today()
         results = []
-        contacts = (
-            self._base_query().filter(Contact.birthday.isnot(None)).all()
-        )
+        contacts = self._base_query().filter(Contact.birthday.isnot(None)).all()
         for contact in contacts:
             bday = contact.birthday
             try:
@@ -129,12 +135,7 @@ class ContactController:
             address=address,
             birthday=birthday,
         )
-        if phones:
-            for p in phones:
-                contact.phones.append(Phone(number=p["number"], type=p.get("type")))
-        if emails:
-            for e in emails:
-                contact.emails.append(Email(address=e["address"], type=e.get("type")))
+        self._assign_phones_emails(contact, phones, emails)
         self.session.add(contact)
         self.session.commit()
         return self._to_dict(contact)
@@ -149,31 +150,19 @@ class ContactController:
         phones: list[dict] | None = None,
         emails: list[dict] | None = None,
     ) -> dict:
-        contact = self.session.query(Contact).filter(Contact.id == contact_id).first()
-        if contact is None:
-            raise ValueError(f"Contact with id {contact_id} not found")
+        contact = self._get_or_raise(contact_id)
         contact.first_name = first_name
         contact.last_name = last_name
         contact.address = address
         contact.birthday = birthday
-
         contact.phones[:] = []
         contact.emails[:] = []
-
-        if phones:
-            for p in phones:
-                contact.phones.append(Phone(number=p["number"], type=p.get("type")))
-        if emails:
-            for e in emails:
-                contact.emails.append(Email(address=e["address"], type=e.get("type")))
-
+        self._assign_phones_emails(contact, phones, emails)
         self.session.commit()
         return self._to_dict(contact)
 
     def delete(self, contact_id: int) -> None:
-        contact = self.session.query(Contact).filter(Contact.id == contact_id).first()
-        if contact is None:
-            raise ValueError(f"Contact with id {contact_id} not found")
+        contact = self._get_or_raise(contact_id)
         self.session.delete(contact)
         self.session.commit()
 
