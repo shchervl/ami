@@ -26,14 +26,16 @@ class NoteListView(BaseListView):
         ttk.Button(search_outer, text="Search", command=self._on_search).pack(
             side=tk.RIGHT, padx=5, pady=2
         )
-        ttk.Entry(search_outer, textvariable=self._search_var).pack(
-            side=tk.LEFT, fill=tk.X, expand=True, padx=5, pady=2
-        )
+        entry = ttk.Entry(search_outer, textvariable=self._search_var)
+        entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5, pady=2)
+        entry.bind("<Return>", lambda _: self._on_search())
 
         # Tag filter area
         tag_outer = ttk.LabelFrame(self, text="Filter by Tags")
         tag_outer.pack(fill=tk.X, padx=5, pady=(0, 5))
 
+        ttk.Button(tag_outer, text="✕", width=2,
+                   command=self._reset_tag_filters).pack(side=tk.RIGHT, padx=(0, 4), pady=2)
         self._tag_filter_frame = ttk.Frame(tag_outer)
         self._tag_filter_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
@@ -73,6 +75,7 @@ class NoteListView(BaseListView):
         self._tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         self._tree.bind("<<TreeviewSelect>>", self._on_select)
+        self._tree.bind("<Double-1>", lambda _: self._on_edit())
 
     def refresh(self, notes=None):
         for row in self._tree.get_children():
@@ -124,6 +127,11 @@ class NoteListView(BaseListView):
         return super()._fetch_data()
 
     def _on_filter_tags(self):
+        self.refresh()
+
+    def _reset_tag_filters(self):
+        for var in self._tag_vars.values():
+            var.set(False)
         self.refresh()
 
     def _on_new(self):
