@@ -108,6 +108,9 @@ Go to the repo on GitHub — you'll see a prompt to open a PR for your recently 
 
 ## Architecture
 
+> For a deeper dive — architecture decisions, challenges, and applied solutions —
+> see [docs/TECHNICAL.md](docs/TECHNICAL.md).
+
 The app follows an **MVC** pattern with a dedicated database layer.
 
 ```
