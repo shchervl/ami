@@ -115,15 +115,16 @@ class NoteListView(BaseListView):
             )
         self.refresh(results)
 
-    def _on_filter_tags(self):
-        selected = [tag for tag, var in self._tag_vars.items() if var.get()]
-        if selected:
-            results = self.controller.search_by_tags(
-                selected, sort_by=self._sort_col, sort_asc=self._sort_asc
+    def _fetch_data(self):
+        selected_tags = [tag for tag, var in self._tag_vars.items() if var.get()]
+        if selected_tags:
+            return self.controller.search_by_tags(
+                selected_tags, sort_by=self._sort_col, sort_asc=self._sort_asc
             )
-            self.refresh(results)
-        else:
-            self.refresh()
+        return super()._fetch_data()
+
+    def _on_filter_tags(self):
+        self.refresh()
 
     def _on_new(self):
         NoteFormView(self, self.controller, note_id=None, on_save=self.refresh)
