@@ -37,15 +37,10 @@ class BaseListView(ttk.Frame):
         self._edit_btn.config(state=state)
         self._del_btn.config(state=state)
 
-    def _fetch_data(self):
-        query = self._search_var.get().strip()
-        if query:
-            return self.controller.search(
-                query, sort_by=self._sort_col, sort_asc=self._sort_asc
-            )
-        return self.controller.get_all(
-            sort_by=self._sort_col, sort_asc=self._sort_asc
-        )
+    def _apply_sort(self):
+        """Sort the current dataset and update the tree. Subclasses override for
+        in-memory sort (avoids DB round-trip and delete+reinsert)."""
+        self.refresh()
 
     def _on_sort(self, col: str):
         if self._sort_col == col:
@@ -56,4 +51,4 @@ class BaseListView(ttk.Frame):
         for c, label in self._headers.items():
             indicator = (" ▲" if self._sort_asc else " ▼") if c == self._sort_col else ""
             self._tree.heading(c, text=label + indicator)
-        self.refresh()
+        self._apply_sort()

@@ -4,6 +4,14 @@ from tkinter import ttk, messagebox, font as tk_font
 from ami.views.base_list_view import BaseListView
 from ami.views.contacts.contact_form_view import ContactFormView
 
+_SORT_KEYS = {
+    "last_name": lambda c: c["last_name"].lower(),
+    "first_name": lambda c: c["first_name"].lower(),
+    "phone": lambda c: c["phones"][0]["number"] if c["phones"] else "",
+    "email": lambda c: (c["emails"][0]["address"] or "").lower() if c["emails"] else "",
+    "birthday": lambda c: c["birthday"] or "",
+}
+
 
 class ContactListView(BaseListView):
     _headers = {
@@ -20,6 +28,7 @@ class ContactListView(BaseListView):
         self._on_contact_saved = on_contact_saved
         self._sort_col = "last_name"
         self._sort_asc = True
+        self._data = []
         self._build_ui()
         self.refresh()
 
@@ -76,10 +85,12 @@ class ContactListView(BaseListView):
         self._tree.bind("<Double-1>", lambda _: self._on_edit())
 
     def refresh(self, contacts=None):
-        for row in self._tree.get_children():
-            self._tree.delete(row)
+        children = self._tree.get_children()
+        if children:
+            self._tree.delete(*children)
         if contacts is None:
             contacts = self._fetch_data()
+        self._data = contacts
 
         max_phones = 1
         for c in contacts:
@@ -98,6 +109,15 @@ class ContactListView(BaseListView):
         self._edit_btn.config(state=tk.DISABLED)
         self._del_btn.config(state=tk.DISABLED)
 
+    def _apply_sort(self):
+        if not self._data:
+            return
+        key = _SORT_KEYS.get(self._sort_col)
+        if key:
+            self._data.sort(key=key, reverse=not self._sort_asc)
+        for i, c in enumerate(self._data):
+            self._tree.move(str(c["id"]), "", i)
+
     def _fmt_phone(self, p):
         return f'{p["number"]} ({p["type"]})' if p["type"] else p["number"]
 
@@ -105,16 +125,7 @@ class ContactListView(BaseListView):
         return f'{e["address"]} ({e["type"]})' if e["type"] else e["address"]
 
     def _on_search(self):
-        query = self._search_var.get().strip()
-        if query:
-            results = self.controller.search(
-                query, sort_by=self._sort_col, sort_asc=self._sort_asc
-            )
-        else:
-            results = self.controller.get_all(
-                sort_by=self._sort_col, sort_asc=self._sort_asc
-            )
-        self.refresh(results)
+        self.refresh()
 
     def _on_save(self, contacts=None):
         self.refresh(contacts)
