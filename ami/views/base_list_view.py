@@ -27,6 +27,16 @@ class BaseListView(ttk.Frame):
         self._edit_btn.config(state=state)
         self._del_btn.config(state=state)
 
+    def _fetch_data(self):
+        query = self._search_var.get().strip()
+        if query:
+            return self.controller.search(
+                query, sort_by=self._sort_col, sort_asc=self._sort_asc
+            )
+        return self.controller.get_all(
+            sort_by=self._sort_col, sort_asc=self._sort_asc
+        )
+
     def _on_sort(self, col: str):
         if self._sort_col == col:
             self._sort_asc = not self._sort_asc

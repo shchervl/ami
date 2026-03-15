@@ -78,9 +78,7 @@ class ContactListView(BaseListView):
         for row in self._tree.get_children():
             self._tree.delete(row)
         if contacts is None:
-            contacts = self.controller.get_all(
-                sort_by=self._sort_col, sort_asc=self._sort_asc
-            )
+            contacts = self._fetch_data()
 
         max_phones = 1
         for c in contacts:

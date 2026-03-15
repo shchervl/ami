@@ -26,7 +26,8 @@ class BirthdayListView(BaseListView):
 
         ttk.Label(top, text="Show birthdays within next").pack(side=tk.LEFT)
         self._days_var = tk.StringVar(value="365")
-        self._days_var.trace_add("write", lambda *_: self.refresh())
+        self._debounce_id = None
+        self._days_var.trace_add("write", self._on_days_changed)
         ttk.Entry(top, textvariable=self._days_var, width=5).pack(side=tk.LEFT, padx=4)
         ttk.Label(top, text="days").pack(side=tk.LEFT)
 
@@ -46,6 +47,11 @@ class BirthdayListView(BaseListView):
         self._tree.configure(yscrollcommand=vsb.set)
         self._tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0), pady=(0, 5))
         vsb.pack(side=tk.LEFT, fill=tk.Y, pady=(0, 5))
+
+    def _on_days_changed(self, *_):
+        if self._debounce_id is not None:
+            self.after_cancel(self._debounce_id)
+        self._debounce_id = self.after(400, self.refresh)
 
     def refresh(self):
         for row in self._tree.get_children():
