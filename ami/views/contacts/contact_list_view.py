@@ -32,9 +32,9 @@ class ContactListView(BaseListView):
         ttk.Button(top, text="Search", command=self._on_search, width=9).pack(
             side=tk.RIGHT, padx=(4, 0)
         )
-        ttk.Entry(top, textvariable=self._search_var).pack(
-            side=tk.LEFT, fill=tk.X, expand=True
-        )
+        entry = ttk.Entry(top, textvariable=self._search_var)
+        entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        entry.bind("<Return>", lambda _: self._on_search())
 
         # Main area
         main = ttk.Frame(self)
@@ -73,6 +73,7 @@ class ContactListView(BaseListView):
         self._tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         self._tree.bind("<<TreeviewSelect>>", self._on_select)
+        self._tree.bind("<Double-1>", lambda _: self._on_edit())
 
     def refresh(self, contacts=None):
         for row in self._tree.get_children():
