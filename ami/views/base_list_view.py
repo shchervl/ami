@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
 
 class BaseListView(ttk.Frame):
@@ -36,6 +36,18 @@ class BaseListView(ttk.Frame):
         state = tk.NORMAL if self._tree.selection() else tk.DISABLED
         self._edit_btn.config(state=state)
         self._del_btn.config(state=state)
+
+    _delete_prompt = "Delete this item?"
+
+    def _on_delete(self):
+        rid = self._selected_id()
+        if rid is not None:
+            if messagebox.askyesno("Delete", self._delete_prompt):
+                try:
+                    self.controller.delete(rid)
+                except ValueError as e:
+                    messagebox.showerror("Error", str(e))
+                self.refresh()
 
     def _apply_sort(self):
         """Sort the current dataset and update the tree. Subclasses override for
