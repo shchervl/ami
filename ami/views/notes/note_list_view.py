@@ -4,6 +4,12 @@ from tkinter import ttk, messagebox
 from ami.views.base_list_view import BaseListView
 from ami.views.notes.note_form_view import NoteFormView
 
+_SORT_KEYS = {
+    "title": lambda n: n["title"].lower(),
+    "tags": lambda n: sorted(t.lower() for t in n.get("tags", []))[0] if n.get("tags") else "",
+    "updated": lambda n: n.get("updated_at") or "",
+}
+
 
 class NoteListView(BaseListView):
     _headers = {"title": "Title", "tags": "Tags", "updated": "Updated"}
@@ -14,6 +20,7 @@ class NoteListView(BaseListView):
         self._tag_vars = {}  # tag_name -> BooleanVar
         self._sort_col = "updated"
         self._sort_asc = False
+        self._data = []
         self._build_ui()
         self.refresh()
 
@@ -78,10 +85,12 @@ class NoteListView(BaseListView):
         self._tree.bind("<Double-1>", lambda _: self._on_edit())
 
     def refresh(self, notes=None):
-        for row in self._tree.get_children():
-            self._tree.delete(row)
+        children = self._tree.get_children()
+        if children:
+            self._tree.delete(*children)
         if notes is None:
             notes = self._fetch_data()
+        self._data = notes
         for n in notes:
             tags_str = ", ".join(sorted(n.get("tags", [])))
             updated = (n.get("updated_at") or "")[:19]  # trim microseconds
@@ -92,6 +101,15 @@ class NoteListView(BaseListView):
         self._rebuild_tag_filters()
         self._edit_btn.config(state=tk.DISABLED)
         self._del_btn.config(state=tk.DISABLED)
+
+    def _apply_sort(self):
+        if not self._data:
+            return
+        key = _SORT_KEYS.get(self._sort_col)
+        if key:
+            self._data.sort(key=key, reverse=not self._sort_asc)
+        for i, n in enumerate(self._data):
+            self._tree.move(str(n["id"]), "", i)
 
     def _rebuild_tag_filters(self):
         previous = {tag: var.get() for tag, var in self._tag_vars.items()}
@@ -106,18 +124,6 @@ class NoteListView(BaseListView):
                 command=self._on_filter_tags
             ).pack(side=tk.LEFT, padx=2)
 
-    def _on_search(self):
-        query = self._search_var.get().strip()
-        if query:
-            results = self.controller.search(
-                query, sort_by=self._sort_col, sort_asc=self._sort_asc
-            )
-        else:
-            results = self.controller.get_all(
-                sort_by=self._sort_col, sort_asc=self._sort_asc
-            )
-        self.refresh(results)
-
     def _fetch_data(self):
         selected_tags = [tag for tag, var in self._tag_vars.items() if var.get()]
         if selected_tags:
@@ -125,6 +131,9 @@ class NoteListView(BaseListView):
                 selected_tags, sort_by=self._sort_col, sort_asc=self._sort_asc
             )
         return super()._fetch_data()
+
+    def _on_search(self):
+        self.refresh()
 
     def _on_filter_tags(self):
         self.refresh()
