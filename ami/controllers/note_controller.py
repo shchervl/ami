@@ -1,5 +1,5 @@
 from sqlalchemy import select, or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from ami.models.note import Note
 from ami.models.tag import Tag, note_tags
@@ -19,8 +19,11 @@ class NoteController:
     def __init__(self, session: Session):
         self.session = session
 
+    def _base_query(self):
+        return self.session.query(Note).options(selectinload(Note.tags))
+
     def get_all(self, sort_by: str = "updated", sort_asc: bool = False) -> list[dict]:
-        q = self.session.query(Note)
+        q = self._base_query()
         if sort_by in _NOTE_DB_SORT:
             col = _NOTE_DB_SORT[sort_by]
             q = q.order_by(col.asc() if sort_asc else col.desc())
@@ -34,7 +37,7 @@ class NoteController:
     def search(self, query: str, sort_by: str = "updated", sort_asc: bool = False) -> list[dict]:
         pattern = f"%{query}%"
         q = (
-            self.session.query(Note)
+            self._base_query()
             .filter(or_(Note.title.ilike(pattern), Note.body.ilike(pattern)))
         )
         if sort_by in _NOTE_DB_SORT:
@@ -58,7 +61,7 @@ class NoteController:
             .where(Tag.name.in_(tag_names))
             .subquery()
         )
-        q = self.session.query(Note).filter(Note.id.in_(select(subq.c.note_id)))
+        q = self._base_query().filter(Note.id.in_(select(subq.c.note_id)))
         if sort_by in _NOTE_DB_SORT:
             col = _NOTE_DB_SORT[sort_by]
             q = q.order_by(col.asc() if sort_asc else col.desc())
@@ -74,7 +77,7 @@ class NoteController:
         return [tag.name for tag in tags]
 
     def get_by_id(self, note_id: int) -> dict | None:
-        note = self.session.query(Note).filter(Note.id == note_id).first()
+        note = self._base_query().filter(Note.id == note_id).first()
         if note is None:
             return None
         return self._to_dict(note)

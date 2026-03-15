@@ -1,7 +1,7 @@
 from datetime import date
 
 from sqlalchemy import or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from ami.models.contact import Contact, Email, Phone
 
@@ -25,8 +25,14 @@ class ContactController:
     def __init__(self, session: Session):
         self.session = session
 
+    def _base_query(self):
+        return self.session.query(Contact).options(
+            selectinload(Contact.phones),
+            selectinload(Contact.emails),
+        )
+
     def get_all(self, sort_by: str = "last_name", sort_asc: bool = True) -> list[dict]:
-        q = self.session.query(Contact)
+        q = self._base_query()
         if sort_by in _CONTACT_DB_SORT:
             col = _CONTACT_DB_SORT[sort_by]
             q = q.order_by(col.asc() if sort_asc else col.desc())
@@ -42,7 +48,7 @@ class ContactController:
     def search(self, query: str, sort_by: str = "last_name", sort_asc: bool = True) -> list[dict]:
         pattern = f"%{query}%"
         q = (
-            self.session.query(Contact)
+            self._base_query()
             .outerjoin(Phone)
             .outerjoin(Email)
             .filter(
@@ -73,7 +79,7 @@ class ContactController:
         today = date.today()
         results = []
         contacts = (
-            self.session.query(Contact).filter(Contact.birthday.isnot(None)).all()
+            self._base_query().filter(Contact.birthday.isnot(None)).all()
         )
         for contact in contacts:
             bday = contact.birthday
@@ -103,7 +109,7 @@ class ContactController:
         return results
 
     def get_by_id(self, contact_id: int) -> dict | None:
-        contact = self.session.query(Contact).filter(Contact.id == contact_id).first()
+        contact = self._base_query().filter(Contact.id == contact_id).first()
         if contact is None:
             return None
         return self._to_dict(contact)
